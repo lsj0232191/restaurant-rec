@@ -4,14 +4,15 @@ import string
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 
+
+
 def calculate_word_frequencies(reviews):
-    word_freq_by_restaurant = defaultdict(lambda: defaultdict(int))
+    # word_freq_by_restaurant = defaultdict(lambda: defaultdict(int))
+    word_freq_by_stars = {1: defaultdict(int), 2: defaultdict(int), 3: defaultdict(int), 4: defaultdict(int), 5: defaultdict(int)}
     stop_words = set(stopwords.words('english'))
 
     for review in reviews:
-        # print(f"Review: {review}")
         text = review.get('text', '').lower()
-        # print(f"Review Text: {text}")
         tokens = word_tokenize(text)
 
         # Remove punctuation and filter out stop words
@@ -23,13 +24,15 @@ def calculate_word_frequencies(reviews):
         for token in filtered_tokens:
             word_freq[token] += 1
 
-        # print(f"Word Frequencies: {word_freq}")
+        star_rating = review.get('stars')
+        if star_rating:
+            word_freq_by_stars[star_rating].update(word_freq)
 
         # Update the word frequency dictionary for the respective restaurant
-        business_id = review.get('business_id')
-        word_freq_by_restaurant[business_id].update(word_freq)
+        # business_id = review.get('business_id')
+        # word_freq_by_restaurant[business_id].update(word_freq)
 
-    return word_freq_by_restaurant
+    return word_freq_by_stars
 
 
 def create_filtered_reviews(filtered_restaurants_file, reviews_file, output_file):
@@ -65,13 +68,15 @@ def create_filtered_reviews(filtered_restaurants_file, reviews_file, output_file
         
         word_frequencies = calculate_word_frequencies(reviews_for_restaurant)
 
-        # print(f"Business ID: {business_id}, Word Frequencies: {word_frequencies}")
-
         # Flatten the word frequency dictionary to a list of dictionaries
-        flattened_word_freq = [{'word': word, 'count': count} for word_dict in word_frequencies.values() for word, count in word_dict.items()]
+        # flattened_word_freq = [{'word': word, 'count': count} for word_dict in word_frequencies.values() for word, count in word_dict.items()]
 
-        restaurant['word_frequencies'] = flattened_word_freq
+        # restaurant['word_frequencies'] = word_frequencies
+        # Sort the word frequencies by count within each star rating
+        sorted_word_freq_by_stars = {star: sorted(word_freq.items(), key=lambda x: x[1], reverse=True) for star, word_freq in word_frequencies.items()}
 
+        # Update the restaurant's data with sorted word frequencies by stars
+        restaurant['word_frequencies'] = sorted_word_freq_by_stars
         filtered_reviews.append(restaurant)    
 
 
