@@ -1,25 +1,27 @@
 import json
 from collections import defaultdict
 import string
+from nltk import pos_tag
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
-
-
+from nltk.stem import WordNetLemmatizer
 
 def calculate_word_frequencies(reviews):
-    # word_freq_by_restaurant = defaultdict(lambda: defaultdict(int))
     word_freq_by_stars = {1: defaultdict(int), 2: defaultdict(int), 3: defaultdict(int), 4: defaultdict(int), 5: defaultdict(int)}
     stop_words = set(stopwords.words('english'))
+    lemmatizer = WordNetLemmatizer()
+
+    # # Define redundant words to ignore
+    # redundant_words = {'awesome', 'good', 'great', 'poor', 'terrific', 'fantastic'}
 
     for review in reviews:
         text = review.get('text', '').lower()
         tokens = word_tokenize(text)
+        pos_tags = pos_tag(tokens)
 
-        # Remove punctuation and filter out stop words
-        tokens = [token for token in tokens if token.isalpha() and token not in string.punctuation]
-        filtered_tokens = [token for token in tokens if token not in stop_words]
+        tokens = [token for token, pos in pos_tags if token.isalpha() and token not in string.punctuation and token not in stop_words and pos != 'RB']  # Filter out adverbs
+        filtered_tokens = [lemmatizer.lemmatize(token) for token in tokens if token not in stop_words]
 
-        # Count word frequencies by restaurant
         word_freq = defaultdict(int)
         for token in filtered_tokens:
             word_freq[token] += 1
@@ -28,11 +30,25 @@ def calculate_word_frequencies(reviews):
         if star_rating:
             word_freq_by_stars[star_rating].update(word_freq)
 
-        # Update the word frequency dictionary for the respective restaurant
-        # business_id = review.get('business_id')
-        # word_freq_by_restaurant[business_id].update(word_freq)
-
     return word_freq_by_stars
+    # for review in reviews:
+    #     text = review.get('text', '').lower()
+    #     tokens = word_tokenize(text)
+
+    #     # Remove punctuation and filter out stop words
+    #     tokens = [token for token in tokens if token.isalpha() and token not in string.punctuation and token not in stop_words]
+    #     filtered_tokens = [lemmatizer.lemmatize(token) for token in tokens if token not in stop_words]
+
+    #     # Count word frequencies by restaurant
+    #     word_freq = defaultdict(int)
+    #     for token in filtered_tokens:
+    #         word_freq[token] += 1
+
+    #     star_rating = review.get('stars')
+    #     if star_rating:
+    #         word_freq_by_stars[star_rating].update(word_freq)
+
+    # return word_freq_by_stars
 
 
 def create_filtered_reviews(filtered_restaurants_file, reviews_file, output_file):
@@ -68,10 +84,6 @@ def create_filtered_reviews(filtered_restaurants_file, reviews_file, output_file
         
         word_frequencies = calculate_word_frequencies(reviews_for_restaurant)
 
-        # Flatten the word frequency dictionary to a list of dictionaries
-        # flattened_word_freq = [{'word': word, 'count': count} for word_dict in word_frequencies.values() for word, count in word_dict.items()]
-
-        # restaurant['word_frequencies'] = word_frequencies
         # Sort the word frequencies by count within each star rating
         sorted_word_freq_by_stars = {star: sorted(word_freq.items(), key=lambda x: x[1], reverse=True) for star, word_freq in word_frequencies.items()}
 
