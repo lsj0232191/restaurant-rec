@@ -9,7 +9,7 @@ class RestaurantReviewSystem:
             print("-", restaurant)
 
     def get_user_choice(self):
-        return input("wich restaurant would you like to rate?(이름 받아오기)").strip()
+        return input("which restaurant would you like to rate?(이름 받아오기)").strip()
 
     def select_favorite_restaurant(self):
         self.display_restaurants()
