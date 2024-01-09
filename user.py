@@ -22,19 +22,17 @@ class Group:
         self.avg_rest = avg_rest
         self.rec_rest = rec_rest
 
-    def combine_keyword():
+    def combine_keyword(self):
         for user in self.users:
-            for preference, categories in user.user_keyword.items():
-                if restaurant not in self.user_data[preference][category]:
-                    self.group_data[preference][category][restaurant] = top_keywords
-                else:
-                    existing_keywords = self.user_data[preference][category][restaurant]
-                    for keyword, count in top_keywords.items():
-                        existing_count = existing_keywords.get(keyword, 0)
-                        existing_keywords[keyword] = existing_count + count
+            user_data = user.user_keyword
             
-            for category, data in categories.items():
-                print(f"Category {category} Keywords:")
-                for restaurant, keywords in data.items():
-                    print(f"{restaurant}: {keywords}")
+            for preference in ("like", "dislike"):
+                for rating_key in ("4", "5", "1", "2"): 
+                    user_data_keywords = user_data.get(preference, {}).get(rating_key, {})
+                    for restaurant, keywords in user_data_keywords.items():
+                        if restaurant not in self.group_data[preference][rating_key]:
+                            self.group_data[preference][rating_key][restaurant] = keywords
+                        else:
+                            self.group_data[preference][rating_key][restaurant].update(keywords)
+
             
